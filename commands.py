@@ -3,10 +3,13 @@ import logging
 from mcstatus import MinecraftServer
 import re
 from telegram.ext.dispatcher import run_async
-from utils import validUrl, ending, by
+from utils import validUrl, ending, name_and_id
 import inspect
 
-logging.basicConfig(handlers=(logging.FileHandler('command_logs.log'),logging.StreamHandler()),
+logging.basicConfig(
+                    handlers=(
+                              logging.FileHandler('command_logs.log'),
+                              logging.StreamHandler()),
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
@@ -57,8 +60,7 @@ def inline_status(update: Update, context: CallbackContext):
             )
 
         context.bot.answer_inline_query(update.inline_query.id, q, cache_time=60)
-        iq = update.inline_query.from_user
-        logging.info("inline answer sent to {0} ({1})".format(iq.username, iq.id))
+        logging.info("inline answer sent to " + name_and_id(update.inline_query))
     
     except timeout:
         error_status_inline(context.bot, update.inline_query.id)
@@ -93,7 +95,7 @@ def message(update: Update, context: CallbackContext):
 @run_async
 def cmd_start(update: Update, context: CallbackContext):
     """Usage: /start"""
-    logging.info(inspect.stack()[0][3] + " called " + by(update.message))
+    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
     user_data = context.user_data
     user_data['url'] = '51.178.75.71:40714'
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
@@ -103,7 +105,7 @@ def cmd_start(update: Update, context: CallbackContext):
 @run_async
 def cmd_status(update: Update, context: CallbackContext):
     """Usage: /status url"""
-    logging.info(inspect.stack()[0][3] + " called " + by(update.message))
+    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 
     user_data = context.user_data
@@ -119,9 +121,9 @@ def cmd_status(update: Update, context: CallbackContext):
 
         info_status(context.bot, update.message.chat_id, user_data['url'], user_data['status'])
         logging.info("/status %s online" % user_data['url'])
-    
+   
     except Exception as e:
-        error_status(context.bot, update.message.chat_id, context.args)
+        error_status(context.bot, update.message.chat_id, user_data['url'])
         logging.exception(e)
 
 
@@ -129,7 +131,7 @@ def cmd_status(update: Update, context: CallbackContext):
 def cmd_players(update: Update, context: CallbackContext):
     """Usage: /players url"""
     
-    logging.info(inspect.stack()[0][3] + " called " + by(update.message))
+    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 
     user_data = context.user_data

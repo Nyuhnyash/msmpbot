@@ -17,6 +17,6 @@ def ending(n):
         p = 2
 
     return endings[p]
-def by(source):
+def name_and_id(source):
     user = source.from_user
-    return "by {0} ({1})".format(user.username, user.id)
+    return "{0} ({1})".format(user.username, user.id)
