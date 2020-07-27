@@ -1,12 +1,11 @@
 from validators import url
-
-def validUrl(url):
-    if url(url) & int(len(url)) > 35:
-        return False
-    else:
+def validUrl(st):
+    if url("http://" +st) and (int(len(st)) < 35):
         return True
+    else:
+        return False
 
-def plural(n):
+def ending(n):
 # Source: https://gist.github.com/CubexX/182bd5918d3455d986b354eadaea02ce
     endings = ['', 'а', 'ов']
     
@@ -17,4 +16,7 @@ def plural(n):
     else:
         p = 2
 
-    return str(n) + ' ' + endings[p]
+    return endings[p]
+def by(source):
+    user = source.from_user
+    return "by {0} ({1})".format(user.username, user.id)
