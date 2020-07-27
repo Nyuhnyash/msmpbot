@@ -1,16 +1,12 @@
-# -*- coding: utf-8 -*-
-# Guillermo Siesto
-# github.com/GSiesto
-
 import telegram
 import logging
 from mcstatus import MinecraftServer
 import re
 from telegram.ext.dispatcher import run_async
-import utils
+from utils import validUrl, ending, by
+import inspect
 
-logging.basicConfig(filename="command_logs.log",
-                    filemode='a',
+logging.basicConfig(handlers=(logging.FileHandler('command_logs.log'),logging.StreamHandler()),
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
@@ -24,74 +20,134 @@ reply_markup = telegram.InlineKeyboardMarkup(keyboard)
 
 
 # ==========================
+# Inline Query Handler
+# ==========================
+
+from telegram import Update, Bot, InlineQueryResultArticle, InputTextMessageContent
+from telegram.ext import CallbackContext
+from socket import timeout
+@run_async
+def inline_status(update: Update, context: CallbackContext):
+    user_data = context.user_data
+    try: 
+        if not user_data['url']:
+            user_data['url'] = "51.178.75.71:40714"
+        if not validUrl(user_data['url']):
+            error_status_inline(context.bot, update.inline_query.id)
+            logging.error("Error status (inline)")
+        server = MinecraftServer.lookup(user_data['url'])
+        query = server.query()
+        q = list()
+        players = query.players.names
+        
+        q.append(InlineQueryResultArticle(
+            id='1', title='IP: ' + user_data['url'],
+            input_message_content=InputTextMessageContent(
+            message_text='IP: ' + user_data['url']))
+            )
+
+        str_players = str(", ".join(players))
+        end = ending(len(players))
+        
+        q.append(InlineQueryResultArticle(
+            id='2', title='{0} игрок{1} онлайн:'.format(len(players),end),
+            description=str_players,
+            input_message_content=InputTextMessageContent(
+            message_text='{0} игрок{1} онлайн: {2}'.format(len(players),end, str_players)))
+            )
+
+        context.bot.answer_inline_query(update.inline_query.id, q, cache_time=60)
+        iq = update.inline_query.from_user
+        logging.info("inline answer sent to {0} ({1})".format(iq.username, iq.id))
+    
+    except timeout:
+        error_status_inline(context.bot, update.inline_query.id)
+        logging.error("Timeout (inline)")
+    except Exception as e:
+        logging.exception(e)
+
+# ==========================
+# Message Handler
+# ==========================
+
+@run_async
+def message(update: Update, context: CallbackContext):
+    """Usage: <IP-address> """
+    logging.info("Message recieved")
+    user_data = context.user_data
+    try: 
+        if not validUrl(update.message.text):
+            logging.info("Invalid URL, too long")
+            return
+        user_data['url'] = update.message.text
+        context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        context.bot.send_message(update.message.chat_id, text="Адрес сервера изменён на "+user_data['url'], parse_mode=telegram.ParseMode.MARKDOWN)
+
+    except Exception as e:
+        logging.exception(e)
+
+# ==========================
 # Commands
 # ==========================
 
 @run_async
-def cmd_start(update, context):
+def cmd_start(update: Update, context: CallbackContext):
     """Usage: /start"""
+    logging.info(inspect.stack()[0][3] + " called " + by(update.message))
+    user_data = context.user_data
+    user_data['url'] = '51.178.75.71:40714'
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(update.message.chat_id, text=welcome_text, parse_mode=telegram.ParseMode.MARKDOWN)
 
 
 @run_async
-def cmd_status(update, context):
+def cmd_status(update: Update, context: CallbackContext):
     """Usage: /status url"""
-    logging.info("/status called")
+    logging.info(inspect.stack()[0][3] + " called " + by(update.message))
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 
-    chat_data = context.chat_data
+    user_data = context.user_data
 
     try:
 
-        if len(context.args) != 1:
-            error_incomplete(context.bot, update)
-            logging.info("/status did't provide an url, /status minecraft.example.com", )
+        if  not validUrl(user_data['url']):
+            error_url(context.bot, update, user_data['url'])
+            logging.error("Invalid URL, too long")
             return
+        user_data['server'] = MinecraftServer.lookup(user_data['url'])
+        user_data['status'] = user_data['server'].status()
 
-        if not utils.validUrl(context.args[0]):
-            error_url(context.bot, update, context.args)
-            logging.info("Invalid URL, too long")
-            return
-
-        chat_data['url'] = context.args[0]
-        chat_data['server'] = MinecraftServer.lookup(chat_data['url'])
-        chat_data['status'] = chat_data['server'].status()
-
-        info_status(context.bot, update.message.chat_id, chat_data['url'], chat_data['status'])
-        logging.info("/status %s online" % context.args[0])
+        info_status(context.bot, update.message.chat_id, user_data['url'], user_data['status'])
+        logging.info("/status %s online" % user_data['url'])
+    
     except Exception as e:
         error_status(context.bot, update.message.chat_id, context.args)
         logging.exception(e)
 
 
 @run_async
-def cmd_players(update, context):
+def cmd_players(update: Update, context: CallbackContext):
     """Usage: /players url"""
-    logging.info("/players called")
+    
+    logging.info(inspect.stack()[0][3] + " called " + by(update.message))
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 
-    chat_data = context.chat_data
+    user_data = context.user_data
 
     try:
 
-        if len(context.args) != 1:
-            error_incomplete(context.bot, update)
-            logging.error("You must provide an URL, /players minecraft.example.com", )
-            return
-
-        if not utils.validUrl(context.args[0]):
-            error_url(context.bot, update, context.args)
+        if not validUrl(user_data['url']):
+            error_url(context.bot, update, user_data['url'])
             logging.info("Invalid URL, too long")
             return
+        user_data['server'] = MinecraftServer.lookup(user_data['url'])
+        user_data['status'] = user_data['server'].status()
 
-        chat_data['url'] = context.args[0]
-        query = MinecraftServer.lookup(chat_data['url'])
-        chat_data['server'] = query
-        chat_data['query'] = query.query()
+        user_data['server'] = user_data['server']
+        user_data['query'] = user_data['server'].query()
 
-        info_players(context.bot, update.message.chat_id, chat_data['url'], chat_data['query'])
-        logging.info("/players %s online" % context.args[0])
+        info_players(context.bot, update.message.chat_id, user_data['url'], user_data['query'])
+        logging.info("/players %s online" % user_data['url'])
 
     except Exception as e:
         error_status(context.bot, update.message.chat_id, context.args)
@@ -103,28 +159,28 @@ def cmd_players(update, context):
 # ==========================
 
 @run_async
-def cb_status(update, context):
+def cb_status(update: Update, context: CallbackContext):
     logging.info("CallBack Status called")
 
-    chat_data = context.chat_data
+    user_data = context.user_data
 
     try:
 
-        chat_data['status'] = chat_data['server'].status()
+        user_data['status'] = user_data['server'].status()
 
-        description_format = re.sub('§.', '', chat_data['status'].description['text'])
+        description_format = re.sub('§.', '', user_data['status'].description['text'])
         description_format = re.sub('', '', description_format)
 
         context.bot.editMessageText(
             text=(
                 "(ﾉ◕ヮ◕)ﾉ:･ﾟ✧\n╭ ✅ *Online*\n*Url:* `{0}`\n*Description:*\n_{1}_\n*Version:* {"
                 "2}\n*Ping:* {3}ms\n*Players:* {4}/{5}\n╰".format(
-                    chat_data['url'],
+                    user_data['url'],
                     description_format,
-                    chat_data['status'].version.name,
-                    chat_data['status'].latency,
-                    chat_data['status'].players.online,
-                    chat_data['status'].players.max,
+                    user_data['status'].version.name,
+                    user_data['status'].latency,
+                    user_data['status'].players.online,
+                    user_data['status'].players.max,
                 ))
             , reply_markup=reply_markup
             , chat_id=update.callback_query.message.chat_id
@@ -132,25 +188,25 @@ def cb_status(update, context):
             , parse_mode=telegram.ParseMode.MARKDOWN)
 
     except Exception as e:
-        error_status_edit(update, context.bot, chat_data['url'])
+        error_status_edit(update, context.bot, user_data['url'])
         logging.exception(e)
 
 
 @run_async
-def cb_players(update, context):
+def cb_players(update: Update, context: CallbackContext):
     logging.info("CallBack Players called")
 
-    chat_data = context.chat_data
+    user_data = context.user_data
 
     try:
-        query = MinecraftServer.lookup(chat_data['url'])
-        chat_data['query'] = query.query()
+        query = MinecraftServer.lookup(user_data['url'])
+        user_data['query'] = query.query()
 
         context.bot.editMessageText(
             text="(•(•◡(•◡•)◡•)•)\n╭ ✅ *Online*\n*Url:* `{0}`\n*Users Online* {1}*:*\n{2}\n╰\n".format(
-                chat_data['url'],
-                len(chat_data['query'].players.names),
-                str("`" + "`, `".join(chat_data['query'].players.names) + "`")
+                user_data['url'],
+                len(user_data['query'].players.names),
+                str("`" + "`, `".join(user_data['query'].players.names) + "`")
             )
             , reply_markup=reply_markup
             , chat_id=update.callback_query.message.chat_id
@@ -158,12 +214,12 @@ def cb_players(update, context):
             , parse_mode=telegram.ParseMode.MARKDOWN)
 
     except Exception as e:
-        error_players_edit(update, context.bot, chat_data['url'])
+        error_players_edit(update, context.bot, user_data['url'])
         logging.exception(e)
 
 
 @run_async
-def cb_about(update, context):
+def cb_about(update: Update, context: CallbackContext):
     logging.info("CallBack About called")
 
     try:
@@ -216,6 +272,16 @@ def info_players(bot, chat_id, _url, _query):
 # ==========================
 # Error
 # ==========================
+
+def error_status_inline(bot: Bot, iq_id):
+    r = InlineQueryResultArticle(
+            id='1', title='Сервер не отвечает',
+            #description=str_players,
+            input_message_content=InputTextMessageContent(
+            message_text='Сервер не отвечает')
+            )
+    bot.answer_inline_query(iq_id, [r], cache_time=5)
+
 
 def error_status(bot, chat_id, args):
     bot.sendMessage(
