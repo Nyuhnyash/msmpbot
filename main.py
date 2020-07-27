@@ -1,33 +1,33 @@
-# -*- coding: utf-8 -*-
-# Guillermo Siesto
-# github.com/GSiesto
-
 import logging
 import commands
 import os
 import sys
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, PicklePersistence, ConversationHandler
-
+from telegram.ext import Updater, MessageHandler, CommandHandler, CallbackQueryHandler, InlineQueryHandler, PicklePersistence, ConversationHandler
 mode = os.getenv("MODE")
 TOKEN = os.getenv("TOKEN")
 
-
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-
+    logging.info("Bot launched")
     my_persistence = PicklePersistence(filename='persistent_data')
 
     updater = Updater(TOKEN, persistence=my_persistence, use_context=True)
     dispatcher = updater.dispatcher
 
+    # Inline Handler
+    dispatcher.add_handler(InlineQueryHandler(commands.inline_status))
+
     # Commands Handlers
     dispatcher.add_handler(CommandHandler('start', commands.cmd_start))
-    dispatcher.add_handler(CommandHandler('status', commands.cmd_status, pass_args=True, pass_chat_data=True))
-    dispatcher.add_handler(CommandHandler('players', commands.cmd_players, pass_args=True, pass_chat_data=True))
+    dispatcher.add_handler(CommandHandler('status', commands.cmd_status))
+    dispatcher.add_handler(CommandHandler('players', commands.cmd_players))
+
+    # Message Handler
+    dispatcher.add_handler(MessageHandler(None, commands.message))
 
     # CallBack Handlers
-    dispatcher.add_handler(CallbackQueryHandler(commands.cb_status, pattern='pattern_status', pass_chat_data=True))
-    dispatcher.add_handler(CallbackQueryHandler(commands.cb_players, pattern='pattern_players', pass_chat_data=True))
+    dispatcher.add_handler(CallbackQueryHandler(commands.cb_status, pattern='pattern_status'))
+    dispatcher.add_handler(CallbackQueryHandler(commands.cb_players, pattern='pattern_players'))
     dispatcher.add_handler(CallbackQueryHandler(commands.cb_about, pattern='pattern_about'))
 
     if mode == "dev":
