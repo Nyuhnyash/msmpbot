@@ -152,7 +152,7 @@ def cmd_players(update: Update, context: CallbackContext):
         logging.info("/players %s online" % user_data['url'])
 
     except Exception as e:
-        error_status(context.bot, update.message.chat_id, context.args)
+        error_status(context.bot, update.message.chat_id, user_data['url'])
         logging.exception(e)
 
 
@@ -170,7 +170,13 @@ def cb_status(update: Update, context: CallbackContext):
 
         user_data['status'] = user_data['server'].status()
 
-        description_format = re.sub('§.', '', user_data['status'].description['text'])
+        if type(user_data['status'].description) is str:
+            description = user_data['status'].description # hypixel-like
+        else:
+            description = user_data['status'].description['text'] # vanilla
+        logging.info("Status description type is "+ str(type(user_data['status'].description)))
+
+        description_format = re.sub('§.', '', description)
         description_format = re.sub('', '', description_format)
 
         context.bot.editMessageText(
@@ -188,7 +194,7 @@ def cb_status(update: Update, context: CallbackContext):
             , chat_id=update.callback_query.message.chat_id
             , message_id=update.callback_query.message.message_id
             , parse_mode=telegram.ParseMode.MARKDOWN)
-
+            
     except Exception as e:
         error_status_edit(update, context.bot, user_data['url'])
         logging.exception(e)
@@ -240,7 +246,13 @@ def cb_about(update: Update, context: CallbackContext):
 # ==========================
 
 def info_status(bot, chat_id, _url, _status):
-    description_format = re.sub('§.', '', _status.description['text'])
+    if type(_status.description) is str:
+        description = _status.description # hypixel-like
+    else:
+        description = _status.description['text'] # vanilla
+    logging.info("Status description type is "+ str(type(_status.description)))
+
+    description_format = re.sub('§.', '', description)
     description_format = re.sub('', '', description_format)
 
     bot.sendMessage(
