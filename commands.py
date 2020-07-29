@@ -13,7 +13,16 @@ logging.basicConfig(
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
-welcome_text = "༼ つ ◕ ◡ ◕ ༽つ\nMinecraft Server Status\n\n/status _url.example.com_\n/players _play.example.com_\n\nBot developed by @GSiesto"
+welcome_text = """
+༼ つ ◕ ◡ ◕ ༽つ\nСервис для отслеживания Колбасного сервера
+
+Чтобы узнать список игроков на сервере введите @msmpbot <любой запрос> в строке ввода текста в любом чате Telegram. 
+
+Команды:
+/status - информация о сервере
+/players - игроки онлайн на сервере
+
+Если вы хотите изменить отслеживаемый сервер, отправьте мне его IP-адрес."""
 
 btn_players = telegram.InlineKeyboardButton("Players", callback_data='pattern_players')
 btn_status = telegram.InlineKeyboardButton("Status", callback_data='pattern_status')
@@ -38,25 +47,31 @@ def inline_status(update: Update, context: CallbackContext):
         if not validUrl(user_data['url']):
             error_status_inline(context.bot, update.inline_query.id)
             logging.error("Error status (inline)")
-        server = MinecraftServer.lookup(user_data['url'])
-        query = server.query()
-        q = list()
-        players = query.players.names
         
+        q = list()
+
         q.append(InlineQueryResultArticle(
             id='1', title='IP: ' + user_data['url'],
             input_message_content=InputTextMessageContent(
             message_text='IP: ' + user_data['url']))
             )
-
-        str_players = str(", ".join(players))
-        end = ending(len(players))
+        server = MinecraftServer.lookup(user_data['url'])
+        status = server.status()
+        online = status.players.online
+        if online < 32:
+            query = server.query()
+            players = query.players.names
+            str_players = str(", ".join(players))
+            descr = str_players
+        else:
+            descr = ""
+        end = ending(online)
         
         q.append(InlineQueryResultArticle(
-            id='2', title='{0} игрок{1} онлайн:'.format(len(players),end),
-            description=str_players,
+            id='2', title='{0} игрок{1} онлайн'.format(online, end),
+            description=descr,
             input_message_content=InputTextMessageContent(
-            message_text='{0} игрок{1} онлайн: {2}'.format(len(players),end, str_players)))
+            message_text='{0} игрок{1} онлайн: {2}'.format(online, end, descr)))
             )
 
         context.bot.answer_inline_query(update.inline_query.id, q, cache_time=60)
@@ -97,7 +112,8 @@ def cmd_start(update: Update, context: CallbackContext):
     """Usage: /start"""
     logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
     user_data = context.user_data
-    user_data['url'] = '51.178.75.71:40714'
+    if not user_data['url']:
+        user_data['url'] = '51.178.75.71:40714'
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(update.message.chat_id, text=welcome_text, parse_mode=telegram.ParseMode.MARKDOWN)
 
@@ -144,11 +160,11 @@ def cmd_players(update: Update, context: CallbackContext):
             return
         user_data['server'] = MinecraftServer.lookup(user_data['url'])
         user_data['status'] = user_data['server'].status()
-
-        user_data['server'] = user_data['server']
-        user_data['query'] = user_data['server'].query()
-
-        info_players(context.bot, update.message.chat_id, user_data['url'], user_data['query'])
+        if user_data['status'].players.online < 32:
+            user_data['query'] = user_data['server'].query()
+            info_players(context.bot, update.message.chat_id, user_data['url'], user_data['query'])
+        else:
+            toomany_players(context.bot, update.message.chat_id, user_data['url'], user_data['status'])
         logging.info("/players %s online" % user_data['url'])
 
     except Exception as e:
@@ -282,6 +298,16 @@ def info_players(bot, chat_id, _url, _query):
         , reply_markup=reply_markup
         , parse_mode=telegram.ParseMode.MARKDOWN)
 
+
+def toomany_players(bot, chat_id, _url, status):
+    bot.sendMessage(
+        text="(•(•◡(•◡•)◡•)•)\n╭ ✅ *Online*\n*Url:* `{0}`\n*Users Online* {1}".format(
+            _url,
+            status.players.online
+        )
+        , reply_markup=reply_markup
+        , chat_id=chat_id
+        , parse_mode=telegram.ParseMode.MARKDOWN)
 
 # ==========================
 # Error
