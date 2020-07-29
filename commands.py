@@ -24,6 +24,8 @@ welcome_text = """
 
 Если вы хотите изменить отслеживаемый сервер, отправьте мне его IP-адрес."""
 
+default_url = "51.178.75.71:40714"
+
 btn_players = telegram.InlineKeyboardButton("Players", callback_data='pattern_players')
 btn_status = telegram.InlineKeyboardButton("Status", callback_data='pattern_status')
 btn_about = telegram.InlineKeyboardButton("About", callback_data='pattern_about')
@@ -40,10 +42,12 @@ from telegram.ext import CallbackContext
 from socket import timeout
 @run_async
 def inline_status(update: Update, context: CallbackContext):
+    logging.info("inline request from " + name_and_id(update.inline_query))
     user_data = context.user_data
     try: 
         if not user_data['url']:
-            user_data['url'] = "51.178.75.71:40714"
+            user_data['url'] = default_url
+
         if not validUrl(user_data['url']):
             error_status_inline(context.bot, update.inline_query.id)
             logging.error("Error status (inline)")
@@ -66,7 +70,7 @@ def inline_status(update: Update, context: CallbackContext):
         else:
             descr = ""
         end = ending(online)
-        
+
         q.append(InlineQueryResultArticle(
             id='2', title='{0} игрок{1} онлайн'.format(online, end),
             description=descr,
@@ -75,11 +79,11 @@ def inline_status(update: Update, context: CallbackContext):
             )
 
         context.bot.answer_inline_query(update.inline_query.id, q, cache_time=60)
-        logging.info("inline answer sent to " + name_and_id(update.inline_query))
+        logging.info("inline answer sent")
     
     except timeout:
         error_status_inline(context.bot, update.inline_query.id)
-        logging.error("Timeout (inline)")
+        logging.error("Timeout error (inline)")
     except Exception as e:
         logging.exception(e)
 
@@ -90,13 +94,15 @@ def inline_status(update: Update, context: CallbackContext):
 @run_async
 def message(update: Update, context: CallbackContext):
     """Usage: <IP-address> """
-    logging.info("Message recieved")
+    text = update.message.text
+    logging.info(text + " recieved from " + name_and_id(update.message))
+
     user_data = context.user_data
     try: 
-        if not validUrl(update.message.text):
+        if not validUrl(text):
             logging.info("Invalid URL, too long")
             return
-        user_data['url'] = update.message.text
+        user_data['url'] = text
         context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(update.message.chat_id, text="Адрес сервера изменён на "+user_data['url'], parse_mode=telegram.ParseMode.MARKDOWN)
 
@@ -113,7 +119,7 @@ def cmd_start(update: Update, context: CallbackContext):
     logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
     user_data = context.user_data
     if not user_data['url']:
-        user_data['url'] = '51.178.75.71:40714'
+        user_data['url'] = default_url
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(update.message.chat_id, text=welcome_text, parse_mode=telegram.ParseMode.MARKDOWN)
 
@@ -178,7 +184,7 @@ def cmd_players(update: Update, context: CallbackContext):
 
 @run_async
 def cb_status(update: Update, context: CallbackContext):
-    logging.info("CallBack Status called")
+    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
 
     user_data = context.user_data
 
@@ -218,7 +224,7 @@ def cb_status(update: Update, context: CallbackContext):
 
 @run_async
 def cb_players(update: Update, context: CallbackContext):
-    logging.info("CallBack Players called")
+    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
 
     user_data = context.user_data
 
@@ -244,7 +250,7 @@ def cb_players(update: Update, context: CallbackContext):
 
 @run_async
 def cb_about(update: Update, context: CallbackContext):
-    logging.info("CallBack About called")
+    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
 
     try:
         context.bot.editMessageText(
@@ -266,7 +272,6 @@ def info_status(bot, chat_id, _url, _status):
         description = _status.description # hypixel-like
     else:
         description = _status.description['text'] # vanilla
-    logging.info("Status description type is "+ str(type(_status.description)))
 
     description_format = re.sub('§.', '', description)
     description_format = re.sub('', '', description_format)
