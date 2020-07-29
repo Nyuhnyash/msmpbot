@@ -3,15 +3,16 @@ import commands
 import os
 import sys
 from telegram.ext import Updater, MessageHandler, CommandHandler, CallbackQueryHandler, InlineQueryHandler, PicklePersistence, ConversationHandler
+
 mode = os.getenv("MODE")
 TOKEN = os.getenv("TOKEN")
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Bot launched")
-    my_persistence = PicklePersistence(filename='persistent_data')
-
-    updater = Updater(TOKEN, persistence=my_persistence, use_context=True)
+    # my_persistence = PicklePersistence(filename='persistent_data')
+    #updater = Updater(TOKEN, persistence=my_persistence, use_context=True)
+    updater = Updater(TOKEN, use_context=True)
     dispatcher = updater.dispatcher
 
     # Inline Handler

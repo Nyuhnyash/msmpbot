@@ -2,3 +2,4 @@ telegram
 python-telegram-bot
 mcstatus
 validators
+python-binary-memcached

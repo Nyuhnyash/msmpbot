@@ -3,7 +3,7 @@ import logging
 from mcstatus import MinecraftServer
 import re
 from telegram.ext.dispatcher import run_async
-from utils import validUrl, ending, name_and_id
+from utils import validUrl, ending, name_and_id, UrlById, SetCustomUrl
 import inspect
 
 logging.basicConfig(
@@ -43,10 +43,11 @@ from socket import timeout
 @run_async
 def inline_status(update: Update, context: CallbackContext):
     logging.info("inline request from " + name_and_id(update.inline_query))
+
     user_data = context.user_data
     try: 
-        if not user_data['url']:
-            user_data['url'] = default_url
+        if not UrlById(update.inline_query):
+            SetCustomUrl(update.message, default_url)
 
         if not validUrl(user_data['url']):
             error_status_inline(context.bot, update.inline_query.id)
@@ -103,6 +104,8 @@ def message(update: Update, context: CallbackContext):
             logging.info("Invalid URL, too long")
             return
         user_data['url'] = text
+        SetCustomUrl(update.message, text)
+
         context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(update.message.chat_id, text="Адрес сервера изменён на "+user_data['url'], parse_mode=telegram.ParseMode.MARKDOWN)
 
@@ -118,21 +121,30 @@ def cmd_start(update: Update, context: CallbackContext):
     """Usage: /start"""
     logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
     user_data = context.user_data
-    if not user_data['url']:
-        user_data['url'] = default_url
+    if not UrlById(update.message):
+            SetCustomUrl(update.message, default_url)
+    user_data['url'] = UrlById(update.message)
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
     context.bot.send_message(update.message.chat_id, text=welcome_text, parse_mode=telegram.ParseMode.MARKDOWN)
-
 
 @run_async
 def cmd_status(update: Update, context: CallbackContext):
     """Usage: /status url"""
+    user_data = context.user_data
+    user_data['url'] = default_url
     logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 
     user_data = context.user_data
 
     try:
+        if not UrlById(update.message):
+            SetCustomUrl(update.message, default_url)
+            user_data['url']
+            print ("not url")
+        
+        print(UrlById(update.message))
+        user_data['url'] = UrlById(update.message)
 
         if  not validUrl(user_data['url']):
             error_url(context.bot, update, user_data['url'])
@@ -143,7 +155,11 @@ def cmd_status(update: Update, context: CallbackContext):
 
         info_status(context.bot, update.message.chat_id, user_data['url'], user_data['status'])
         logging.info("/status %s online" % user_data['url'])
-   
+
+    except timeout:
+        error_status(context.bot, update.message.id,user_data['url'])
+        logging.error("Timeout error (/status)")
+
     except Exception as e:
         error_status(context.bot, update.message.chat_id, user_data['url'])
         logging.exception(e)
@@ -159,6 +175,9 @@ def cmd_players(update: Update, context: CallbackContext):
     user_data = context.user_data
 
     try:
+        if not UrlById(update.message):
+            SetCustomUrl(update.message, default_url)
+        user_data['url'] = UrlById(update.message)
 
         if not validUrl(user_data['url']):
             error_url(context.bot, update, user_data['url'])
@@ -184,7 +203,7 @@ def cmd_players(update: Update, context: CallbackContext):
 
 @run_async
 def cb_status(update: Update, context: CallbackContext):
-    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
+    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.callback_query))
 
     user_data = context.user_data
 
@@ -224,8 +243,7 @@ def cb_status(update: Update, context: CallbackContext):
 
 @run_async
 def cb_players(update: Update, context: CallbackContext):
-    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
-
+    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.callback_query))
     user_data = context.user_data
 
     try:
@@ -250,7 +268,7 @@ def cb_players(update: Update, context: CallbackContext):
 
 @run_async
 def cb_about(update: Update, context: CallbackContext):
-    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
+    logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.callback_query))
 
     try:
         context.bot.editMessageText(

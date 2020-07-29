@@ -17,6 +17,22 @@ def ending(n):
         p = 2
 
     return endings[p]
+
 def name_and_id(source):
     user = source.from_user
     return "{0} ({1})".format(user.username, user.id)
+
+# memcached
+import os
+import bmemcached
+import json
+from main import mode
+
+mc = bmemcached.Client(os.environ.get('MEMCACHEDCLOUD_SERVERS').split(','), os.environ.get('MEMCACHEDCLOUD_USERNAME'), os.environ.get('MEMCACHEDCLOUD_PASSWORD'))
+
+def UrlById(source):
+    if mode=="prod":
+        return mc.get(str(source.from_user.id))
+def SetCustomUrl(source,customUrl):
+    if mode=="prod":
+        mc.set(str(source.from_user.id), customUrl)
