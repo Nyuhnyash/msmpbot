@@ -139,7 +139,7 @@ def cmd_status(update: Update, context: CallbackContext):
         logging.info("/status %s online" % user_data['url'])
 
     except timeout:
-        error_status(context.bot, update.message.id,user_data['url'])
+        error_status(context.bot, update.message.chat_id,user_data['url'])
         logging.error("Timeout error (/status)")
 
     except Exception as e:
@@ -323,11 +323,11 @@ def error_status_inline(bot: Bot, iq_id):
     bot.answer_inline_query(iq_id, [r], cache_time=5)
 
 
-def error_status(bot, chat_id, args):
+def error_status(bot, chat_id, param_url):
     bot.sendMessage(
         chat_id=chat_id,
         text="(╯°□°）╯ ︵ ┻━┻\n╭ ⭕ *Offline*\n*Url:* `{0}`\n*Error Description:*\n{1}\n╰\n".format(
-            args[0],
+            param_url,
             str("_Could not connect to the server_")
         )
         , reply_markup=reply_markup
