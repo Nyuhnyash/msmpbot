@@ -3,7 +3,8 @@ import logging
 from mcstatus import MinecraftServer
 import re
 from telegram.ext.dispatcher import run_async
-from utils import validUrl, ending, name_and_id, UrlById, SetCustomUrl
+from utils import validUrl, ending, name_and_id
+import db
 import inspect
 
 logging.basicConfig(
@@ -23,8 +24,6 @@ welcome_text = """
 /players - игроки онлайн на сервере
 
 Если вы хотите изменить отслеживаемый сервер, отправьте мне его IP-адрес."""
-
-default_url = "51.178.75.71:40714"
 
 btn_players = telegram.InlineKeyboardButton("Players", callback_data='pattern_players')
 btn_status = telegram.InlineKeyboardButton("Status", callback_data='pattern_status')
@@ -46,12 +45,7 @@ def inline_status(update: Update, context: CallbackContext):
 
     user_data = context.user_data
     try: 
-        if not UrlById(update.inline_query):
-            SetCustomUrl(update.message, default_url)
-
-        if not validUrl(user_data['url']):
-            error_status_inline(context.bot, update.inline_query.id)
-            logging.error("Error status (inline)")
+        user_data['url'] = db.get(update.inline_query)
         
         q = list()
 
@@ -100,11 +94,14 @@ def message(update: Update, context: CallbackContext):
 
     user_data = context.user_data
     try: 
+        
+        if text=="default":
+            text = db.default_url
         if not validUrl(text):
             logging.info("Invalid URL, too long")
             return
         user_data['url'] = text
-        SetCustomUrl(update.message, text)
+        db.set(update.message, text)
 
         context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
         context.bot.send_message(update.message.chat_id, text="Адрес сервера изменён на "+user_data['url'], parse_mode=telegram.ParseMode.MARKDOWN)
@@ -120,36 +117,21 @@ def message(update: Update, context: CallbackContext):
 def cmd_start(update: Update, context: CallbackContext):
     """Usage: /start"""
     logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
-    user_data = context.user_data
-    if not UrlById(update.message):
-            SetCustomUrl(update.message, default_url)
-    user_data['url'] = UrlById(update.message)
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+    
     context.bot.send_message(update.message.chat_id, text=welcome_text, parse_mode=telegram.ParseMode.MARKDOWN)
 
 @run_async
 def cmd_status(update: Update, context: CallbackContext):
     """Usage: /status url"""
-    user_data = context.user_data
-    user_data['url'] = default_url
     logging.info(inspect.stack()[0][3] + " called by " + name_and_id(update.message))
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 
     user_data = context.user_data
+    user_data['url'] = db.get(update.message)
 
     try:
-        if not UrlById(update.message):
-            SetCustomUrl(update.message, default_url)
-            user_data['url']
-            print ("not url")
-        
-        print(UrlById(update.message))
-        user_data['url'] = UrlById(update.message)
 
-        if  not validUrl(user_data['url']):
-            error_url(context.bot, update, user_data['url'])
-            logging.error("Invalid URL, too long")
-            return
         user_data['server'] = MinecraftServer.lookup(user_data['url'])
         user_data['status'] = user_data['server'].status()
 
@@ -173,16 +155,11 @@ def cmd_players(update: Update, context: CallbackContext):
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 
     user_data = context.user_data
-
+    user_data['url'] = db.get(update.message)
     try:
-        if not UrlById(update.message):
-            SetCustomUrl(update.message, default_url)
-        user_data['url'] = UrlById(update.message)
+        
+        user_data['url'] = db.get(update.message)
 
-        if not validUrl(user_data['url']):
-            error_url(context.bot, update, user_data['url'])
-            logging.info("Invalid URL, too long")
-            return
         user_data['server'] = MinecraftServer.lookup(user_data['url'])
         user_data['status'] = user_data['server'].status()
         if user_data['status'].players.online < 32:
