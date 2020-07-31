@@ -1,5 +1,5 @@
-from validators import url
 def validUrl(st):
+    from validators import url
     if url("http://" +st) and (int(len(st)) < 35):
         return True
     else:
