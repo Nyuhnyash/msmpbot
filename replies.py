@@ -10,7 +10,7 @@ reply_markup = telegram.InlineKeyboardMarkup(keyboard)
 
 class error:
     
-    def status_inline(bot: telegram.Bot, iq_id):
+    def inline(bot: telegram.Bot, iq_id):
         r = telegram.InlineQueryResultArticle(
                 id='1', title='Сервер не отвечает',
                 input_message_content=telegram.InputTextMessageContent(
@@ -19,7 +19,7 @@ class error:
         bot.answer_inline_query(iq_id, [r], cache_time=5)
 
 
-    def status(bot, chat_id, param_url):
+    def message(bot, chat_id, param_url):
         bot.sendMessage(
             chat_id=chat_id,
             text="(╯°□°）╯ ︵ ┻━┻\n╭ ⭕ *Offline*\n*Url:* `{0}`\n*Error Description:*\n{1}\n╰\n".format(
@@ -30,48 +30,15 @@ class error:
             , parse_mode=telegram.ParseMode.MARKDOWN)
 
 
-    def status_edit(update, bot, param_url):
+    def callback(bot, message, param_url):
         bot.editMessageText(
-            text="(╯°□°）╯ ︵ ┻━┻\n╭ ⭕ *Offline*\n*Url:* `{0}`\n*Error Description:*\n{1}\n╰\n".format(
+            text="(╯°□°）╯ ︵ ┻━┻\n╭ ⭕ *Error*\n*Url:* `{0}`\n*Error Description:*\n{1}\n╰\n".format(
                 param_url,
                 str("_Could not connect to the server_")
             )
             , reply_markup=reply_markup
-            , chat_id=update.callback_query.message.chat_id
-            , message_id=update.callback_query.message.message_id
-            , parse_mode=telegram.ParseMode.MARKDOWN)
-
-
-    def players_edit(update, bot, param_url):
-        bot.editMessageText(
-            text="(╯°□°）╯ ︵ ┻━┻\n╭ 🔻 *Error*\n*Url:* `{0}`\n*Error Description:*\n_Could not connect to the "
-                "server_\n_The server may not allow Query requests_\n╰\n".format(param_url)
-            , reply_markup=reply_markup
-            , chat_id=update.callback_query.message.chat_id
-            , message_id=update.callback_query.message.message_id
-            , parse_mode=telegram.ParseMode.MARKDOWN)
-
-
-    def url(bot, update, args):
-        bot.sendMessage(
-            chat_id=update.message.chat_id,
-            text=("(╯°□°）╯ ︵ ┻━┻\n╭ 🔻 *Error*\n*Url:* `{0}`\n*Error Description:*\n{1}\n\n*Correct "
-                "Examples:*\n_play.minecraft.net_\n_minecraftgame.org_\n╰").format(
-                args[0],
-                str("_The url introduced is not valid, please, try again_")
-            )
-            , reply_markup=reply_markup
-            , parse_mode=telegram.ParseMode.MARKDOWN)
-
-
-    def incomplete(bot, update):
-        bot.sendMessage(
-            chat_id=update.message.chat_id,
-            text=(
-                "(╯°□°）╯ ︵ ┻━┻\n╭ 🔻 *Error*\n_You must provide an url please, try again_\n\n*Correct "
-                "Examples:*\n_/status play.minecraft.net_\n_/status minecraftgame.org:25898_\n╰ "
-            )
-            , reply_markup=reply_markup
+            , chat_id=message.chat_id
+            , message_id=message.message_id
             , parse_mode=telegram.ParseMode.MARKDOWN)
 
 class info:
