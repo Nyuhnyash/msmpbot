@@ -1,8 +1,11 @@
-import logging
-import commands
 import os
 import sys
-from telegram.ext import Updater, MessageHandler, CommandHandler, CallbackQueryHandler, InlineQueryHandler, PicklePersistence, ConversationHandler
+import logging
+
+from telegram.ext import Updater, MessageHandler, CommandHandler, CallbackQueryHandler, InlineQueryHandler, TypeHandler
+from telegram import TelegramObject
+
+import commands
 
 mode = os.getenv("MODE")
 TOKEN = os.getenv("TOKEN")
@@ -10,26 +13,29 @@ TOKEN = os.getenv("TOKEN")
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Bot launched")
-    # my_persistence = PicklePersistence(filename='persistent_data')
-    #updater = Updater(TOKEN, persistence=my_persistence, use_context=True)
     updater = Updater(TOKEN, use_context=True)
     dispatcher = updater.dispatcher
 
+    # Before all handlers
+    dispatcher.add_handler(TypeHandler(TelegramObject, commands.check_database), group=0)
+
     # Inline Handler
-    dispatcher.add_handler(InlineQueryHandler(commands.inline_status))
+    dispatcher.add_handler(InlineQueryHandler(commands.inline_status), group=1)
 
     # Commands Handlers
-    dispatcher.add_handler(CommandHandler('start', commands.cmd_start))
-    dispatcher.add_handler(CommandHandler('status', commands.cmd_status))
-    dispatcher.add_handler(CommandHandler('players', commands.cmd_players))
+    dispatcher.add_handler(CommandHandler('start', commands.cmd_start), group=2)
+    dispatcher.add_handler(CommandHandler('status', commands.cmd_status), group=2)
+    dispatcher.add_handler(CommandHandler('players', commands.cmd_players), group=2)
 
     # Message Handler
-    dispatcher.add_handler(MessageHandler(None, commands.message))
+    dispatcher.add_handler(MessageHandler(None, commands.message), group=2)
 
     # CallBack Handlers
-    dispatcher.add_handler(CallbackQueryHandler(commands.cb_status, pattern='pattern_status'))
-    dispatcher.add_handler(CallbackQueryHandler(commands.cb_players, pattern='pattern_players'))
-    dispatcher.add_handler(CallbackQueryHandler(commands.cb_about, pattern='pattern_about'))
+    dispatcher.add_handler(CallbackQueryHandler(commands.cb_status, pattern='pattern_status'), group=3)
+    dispatcher.add_handler(CallbackQueryHandler(commands.cb_players, pattern='pattern_players'), group=3)
+    dispatcher.add_handler(CallbackQueryHandler(commands.cb_about, pattern='pattern_about'), group=3)
+
+    dispatcher.add_error_handler(commands.error_handler)
 
     if mode == "dev":
         updater.start_polling()
