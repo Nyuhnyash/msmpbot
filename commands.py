@@ -7,7 +7,7 @@ from telegram.ext import CallbackContext
 
 from utils import validUrl, ending, name_and_id, update_object_type
 from replies import error, info, reply_markup
-import db
+from db import default_url, data
 
 logging.basicConfig(
                     handlers=(
@@ -74,12 +74,12 @@ def message(update: Update, context: CallbackContext):
     text = update.message.text
         
     if text=="default":
-        text = db.default_url
+        text = default_url
     if not validUrl(text):
         logging.info("Invalid URL, too long")
         return
     user_data['url'] = text
-    db.set(update.effective_user.id, text)
+    data(update.effective_user.id, text)
 
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
     context.bot.send_message(update.message.chat_id, text="Адрес сервера изменён на "+user_data['url'], parse_mode=ParseMode.MARKDOWN)
@@ -92,7 +92,7 @@ def message(update: Update, context: CallbackContext):
 def cmd_start(update: Update, context: CallbackContext):
     """Usage: /start"""
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-    
+
     context.bot.send_message(update.message.chat_id, text=welcome_text, parse_mode=ParseMode.MARKDOWN)
 
 
@@ -194,11 +194,11 @@ def cb_about(update: Update, context: CallbackContext):
 
 def check_database(update, context):
     try:
-
+        
         context.user_data['url']
 
     except KeyError:
-        context.user_data['url'] = db.get(update.effective_user.id)
+        context.user_data['url'] = data(update.effective_user.id)
 
     logging.info(update_object_type(update).__class__.__name__ + " recieved from " + name_and_id(update.effective_user))
         

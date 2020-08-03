@@ -1,39 +1,33 @@
-import os
+from os import getenv
 import psycopg2
 
-DATABASE_URL = os.environ['DATABASE_URL']
-# conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-# cur = conn.cursor()
-# cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\' ORDER BY 1")
-# table_name = cur.fetchone()
+DATABASE_URL = getenv('DATABASE_URL')
 
 default_url = "51.178.75.71:40714"
 
-def get(source):
-    id = source.from_user.id
-
+def data(user_id, url=None):
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     cur = conn.cursor()
-    cur.execute("SELECT url FROM users WHERE user_id = {};".format(id))
-    if cur.rowcount == 0:
-        return default_url
+
+    cur.execute("SELECT url FROM users WHERE user_id = {};".format(user_id))
+
+    # set
+    if url:
+        if cur.rowcount == 0:
+            cur.execute("INSERT INTO users (user_id, url) VALUES ({}, '{}');".format(user_id, url))
+        else:
+            if cur.fetchone() != url:
+                cur.execute("UPDATE users SET url = '{}' WHERE user_id = {};".format(url, user_id))
+    # get
     else:
-        return cur.fetchone()[0]
+        if  cur.rowcount == 0:
+            cur.execute("INSERT INTO users (user_id, url) VALUES ({}, '{}');".format(user_id, default_url))
+            r = default_url
+        else:
+            r = cur.fetchone()[0]
+
     conn.commit()
     cur.close()
     conn.close()
 
-def set(source, customUrl: str):
-    id = source.from_user.id
-
-    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-    cur = conn.cursor()
-    cur.execute("SELECT url FROM users WHERE user_id = {};".format(id))
-    if cur.rowcount == 0:
-        cur.execute("INSERT INTO users (user_id, url) VALUES ({}, '{}');".format(id, customUrl))
-    else:
-        if cur.fetchone() != customUrl:
-            cur.execute("UPDATE users SET url = '{}' WHERE user_id = {};".format(customUrl, id))
-    conn.commit()
-    cur.close()
-    conn.close()
+    if not url: return r
