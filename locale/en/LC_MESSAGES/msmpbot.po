@@ -1,0 +1,106 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: msmpbot\n"
+"POT-Creation-Date: 2020-08-07 17:24+0400\n"
+"PO-Revision-Date: 2020-08-07 19:08+0400\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4\n"
+"X-Poedit-Basepath: ../../..\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-SearchPath-0: commands.py\n"
+"X-Poedit-SearchPath-1: replies.py\n"
+
+#: commands.py:29 commands.py:31
+msgid "Address: "
+msgstr ""
+
+#: commands.py:45 commands.py:48
+#, python-brace-format
+msgid "{0} player online"
+msgid_plural "{0} players online"
+msgstr[0] ""
+msgstr[1] ""
+
+#: commands.py:73
+msgid "Server addess changed to "
+msgstr ""
+
+#: commands.py:85 commands.py:198
+msgid ""
+"Minecraft Server Status Bot\n"
+"\n"
+"To check players online on the server use @msmpbot in the text input line in "
+"any Telegram chat.\n"
+"\n"
+"Commands:\n"
+"/status - Server info\n"
+"/players - Online players on the server\n"
+"\n"
+"To change the monitored server send me its address."
+msgstr ""
+
+#: commands.py:148 replies.py:66
+#, python-brace-format
+msgid ""
+"(ﾉ◕ヮ◕)ﾉ:･ﾟ✧\n"
+"╭ ✅ *Online*\n"
+"*Url:* `{0}`\n"
+"*Description:*\n"
+"_{1}_\n"
+"*Version:* {2}\n"
+"*Ping:* {3}ms\n"
+"*Players:* {4}/{5}\n"
+"╰"
+msgstr ""
+
+#: commands.py:178
+#, python-brace-format
+msgid ""
+"(•(•◡(•◡•)◡•)•)\n"
+"╭ ✅ *Online*\n"
+"*Url:* `{0}`\n"
+"*Players online:* {1}*:*\n"
+"{2}\n"
+"╰"
+msgstr ""
+
+#: replies.py:7
+msgid "Players"
+msgstr ""
+
+#: replies.py:8
+msgid "Status"
+msgstr ""
+
+#: replies.py:9
+msgid "About"
+msgstr ""
+
+#: replies.py:17 replies.py:19 replies.py:32 replies.py:45
+msgid "Could not connect to the server"
+msgstr ""
+
+#: replies.py:27 replies.py:40
+#, python-brace-format
+msgid ""
+"(╯°□°）╯ ︵ ┻━┻\n"
+"╭ ⭕ *Error*\n"
+"*Url:* `{0}`\n"
+"*Error Description:*\n"
+"{1}\n"
+"╰\n"
+msgstr ""
+
+#: replies.py:91 replies.py:107
+#, python-brace-format
+msgid ""
+"(•(•◡(•◡•)◡•)•)\n"
+"╭ ✅ *Online*\n"
+"*Url:* `{0}`\n"
+"*Players Online* {1}"
+msgstr ""

@@ -5,19 +5,6 @@ def validUrl(st):
     else:
         return False
 
-def ending(n):
-# Source: https://gist.github.com/CubexX/182bd5918d3455d986b354eadaea02ce
-    endings = ['', 'а', 'ов']
-    
-    if n % 10 == 1 and n % 100 != 11:
-        p = 0
-    elif 2 <= n % 10 <= 4 and (n % 100 < 10 or n % 100 >= 20):
-        p = 1
-    else:
-        p = 2
-
-    return endings[p]
-
 def name_and_id(effective_user):
     return "{0} ({1})".format(effective_user.username, effective_user.id)
 
