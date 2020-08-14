@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: msmpbot\n"
-"POT-Creation-Date: 2020-08-07 17:24+0400\n"
-"PO-Revision-Date: 2020-08-07 19:08+0400\n"
+"POT-Creation-Date: 2020-08-14 18:03+0400\n"
+"PO-Revision-Date: 2020-08-14 18:03+0400\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: en\n"
@@ -15,36 +15,22 @@ msgstr ""
 "X-Poedit-SearchPath-0: commands.py\n"
 "X-Poedit-SearchPath-1: replies.py\n"
 
-#: commands.py:29 commands.py:31
+#: commands.py:28 commands.py:30
 msgid "Address: "
 msgstr ""
 
-#: commands.py:45 commands.py:48
+#: commands.py:35
 #, python-brace-format
 msgid "{0} player online"
 msgid_plural "{0} players online"
 msgstr[0] ""
 msgstr[1] ""
 
-#: commands.py:73
+#: commands.py:66
 msgid "Server addess changed to "
 msgstr ""
 
-#: commands.py:85 commands.py:198
-msgid ""
-"Minecraft Server Status Bot\n"
-"\n"
-"To check players online on the server use @msmpbot in the text input line in "
-"any Telegram chat.\n"
-"\n"
-"Commands:\n"
-"/status - Server info\n"
-"/players - Online players on the server\n"
-"\n"
-"To change the monitored server send me its address."
-msgstr ""
-
-#: commands.py:148 replies.py:66
+#: commands.py:127 replies.py:65
 #, python-brace-format
 msgid ""
 "(ﾉ◕ヮ◕)ﾉ:･ﾟ✧\n"
@@ -58,34 +44,48 @@ msgid ""
 "╰"
 msgstr ""
 
-#: commands.py:178
+#: commands.py:158 replies.py:91
 #, python-brace-format
 msgid ""
 "(•(•◡(•◡•)◡•)•)\n"
 "╭ ✅ *Online*\n"
 "*Url:* `{0}`\n"
-"*Players online:* {1}*:*\n"
+"*Players online:* {1}\n"
 "{2}\n"
 "╰"
 msgstr ""
 
-#: replies.py:7
+#: commands.py:212
+msgid ""
+"Minecraft Server Status Bot\n"
+"\n"
+"To check players online on the server use @msmpbot in the text input line in "
+"any Telegram chat.\n"
+"\n"
+"Commands:\n"
+"/status - Server info\n"
+"/players - Online players on the server\n"
+"\n"
+"To change the monitored server send me its address."
+msgstr ""
+
+#: replies.py:6
 msgid "Players"
 msgstr ""
 
-#: replies.py:8
+#: replies.py:7
 msgid "Status"
 msgstr ""
 
-#: replies.py:9
+#: replies.py:8
 msgid "About"
 msgstr ""
 
-#: replies.py:17 replies.py:19 replies.py:32 replies.py:45
+#: replies.py:16 replies.py:18 replies.py:31 replies.py:44
 msgid "Could not connect to the server"
 msgstr ""
 
-#: replies.py:27 replies.py:40
+#: replies.py:26 replies.py:39
 #, python-brace-format
 msgid ""
 "(╯°□°）╯ ︵ ┻━┻\n"
@@ -94,13 +94,4 @@ msgid ""
 "*Error Description:*\n"
 "{1}\n"
 "╰\n"
-msgstr ""
-
-#: replies.py:91 replies.py:107
-#, python-brace-format
-msgid ""
-"(•(•◡(•◡•)◡•)•)\n"
-"╭ ✅ *Online*\n"
-"*Url:* `{0}`\n"
-"*Players Online* {1}"
 msgstr ""

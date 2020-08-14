@@ -83,33 +83,21 @@ class info:
             , parse_mode=telegram.ParseMode.MARKDOWN)
 
 
-    def players(bot, chat_id, _url, _query):
+    def players(bot, chat_id, _url, _players):
+        online, str_players = _players
         bot.sendMessage(
             chat_id=chat_id,
             text=_(
-                "(•(•◡(•◡•)◡•)•)\n"
-                "╭ ✅ *Online*\n"
-                "*Url:* `{0}`\n"
-                "*Players Online* {1}")
+                    "(•(•◡(•◡•)◡•)•)\n"
+                    "╭ ✅ *Online*\n"
+                    "*Url:* `{0}`\n"
+                    "*Players online:* {1}\n"
+                    "{2}\n"
+                    "╰"
+                )
                 .format(
                     _url,
-                    len(_query.players.names))
-                + "\n{}".format(str("`" + "`, `".join(_query.players.names) + "`"))
-
+                    online,
+                    str_players)
             , reply_markup=reply_markup()
-            , parse_mode=telegram.ParseMode.MARKDOWN)
-
-
-    def players_toomany(bot, chat_id, _url, status):
-        bot.sendMessage(
-            text=_(
-                "(•(•◡(•◡•)◡•)•)\n"
-                "╭ ✅ *Online*\n"
-                "*Url:* `{0}`\n"
-                "*Players Online* {1}").format(
-                _url,
-                status.players.online
-                )
-            , reply_markup=reply_markup()
-            , chat_id=chat_id
             , parse_mode=telegram.ParseMode.MARKDOWN)

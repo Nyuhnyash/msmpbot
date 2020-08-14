@@ -1,12 +1,11 @@
 # pylint: disable=undefined-variable
 import logging
 
-from mcstatus import MinecraftServer
 from telegram import Update, InlineQueryResultArticle, InputTextMessageContent, ChatAction, ParseMode
 from telegram.ext import CallbackContext
 from telegram.ext.dispatcher import run_async
 
-from utils import validUrl, name_and_id, update_object_type
+from utils import validUrl, name_and_id, update_object_type, MinecraftServer, players
 from replies import error, info, reply_markup
 from db import default_url, data
 logging.basicConfig(
@@ -21,31 +20,25 @@ logging.basicConfig(
 # ==========================
 
 def inline_status(update: Update, context: CallbackContext):
-    user_data = context.user_data
+    address = context.user_data['url']
 
     q = list()
 
     q.append(InlineQueryResultArticle(
-        id='1', title=_('Address: ') + user_data['url'],
+        id='1', title=_('Address: ') + address,
         input_message_content=InputTextMessageContent(
-        message_text=_('Address: ') + user_data['url']))
+        message_text=_('Address: ') + address))
         )
-    server = MinecraftServer.lookup(user_data['url'])
-    status = server.status()
-    online = status.players.online
-    if online < 32:
-        query = server.query()
-        players = query.players.names
-        str_players = str(", ".join(players))
-        descr = str_players
-    else:
-        descr = ""
+
+    online, str_players = players(address, True)
+
+    text = ngettext('{0} player online', '{0} players online', online).format(online)
 
     q.append(InlineQueryResultArticle(
-        id='2', title=ngettext('{0} player online', '{0} players online', online).format(online),
-        description=descr,
+        id='2', title=text,
+        description=str_players,
         input_message_content=InputTextMessageContent(
-        message_text=ngettext('{0} player online', '{0} players online', online).format(online) + ': ' + descr)))
+        message_text=text + ': ' + str_players)))
 
     context.bot.answer_inline_query(update.inline_query.id, q, cache_time=60)
     logging.info("inline answer sent")
@@ -103,16 +96,11 @@ def cmd_players(update: Update, context: CallbackContext):
     """Usage: /players url"""
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
 
-    user_data = context.user_data
+    address = context.user_data['url']
 
-    user_data['server'] = MinecraftServer.lookup(user_data['url'])
-    user_data['status'] = user_data['server'].status()
-    if user_data['status'].players.online < 32:
-        user_data['query'] = user_data['server'].query()
-        info.players(context.bot, update.message.chat_id, user_data['url'], user_data['query'])
-    else:
-        info.players_toomany(context.bot, update.message.chat_id, user_data['url'], user_data['status'])
-    logging.info("/players %s online" % user_data['url'])
+    info.players(context.bot, update.message.chat_id, address, players(address))
+
+    logging.info("/players %s online" % address)
 
 
 # ==========================
@@ -170,7 +158,7 @@ def cb_players(update: Update, context: CallbackContext):
             "(•(•◡(•◡•)◡•)•)\n"
             "╭ ✅ *Online*\n"
             "*Url:* `{0}`\n"
-            "*Players online:* {1}*:*\n"
+            "*Players online:* {1}\n"
             "{2}\n"
             "╰"
             ).format(

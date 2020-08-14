@@ -1,3 +1,28 @@
+def players(address, sample=False):
+    server = MinecraftServer.lookup(address)
+    
+    str_players = ""
+    names = list()
+    if server.enable_query and not sample:
+        query = server.query()
+
+        online = query.players.online
+        names = query.players.names
+        
+    else:
+        status = server.status()
+    
+        online = status.players.online
+        players = status.players.sample
+
+        if players: 
+            for player in players:
+                names.append(player.name)
+
+    str_players = str(", ".join(names))
+
+    return online, str_players
+
 from validators import url
 def validUrl(address):
     if url('http://' + address) and (int(len(address)) < 35):
