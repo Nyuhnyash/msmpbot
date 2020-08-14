@@ -3,3 +3,4 @@ python-telegram-bot
 mcstatus
 validators
 psycopg2
+requests
