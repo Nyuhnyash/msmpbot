@@ -7,7 +7,7 @@ from telegram.ext.dispatcher import run_async
 
 from utils import validUrl, name_and_id, update_object_type, MinecraftServer, players
 from replies import error, info, reply_markup
-from db import default_url, data
+from db import data
 logging.basicConfig(
                     handlers=(
                               logging.FileHandler('command_logs.log'),
@@ -52,15 +52,16 @@ def message(update: Update, context: CallbackContext):
     """Usage: <IP-address> """
     user_data = context.user_data
     
-    text = update.message.text
+    text = update.message.text.lower()
 
-    if text=="default":
-        text = default_url
-    if not validUrl(text):
-        logging.info("Invalid URL, too long")
-        return
-    user_data['url'] = text
+    if text != 'default':
+        if not validUrl(text):
+            logging.info("Invalid URL, too long")
+            return
+
     data(update.effective_user.id, text)
+
+    user_data['url'] = data(update.effective_user.id)
 
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
     context.bot.send_message(update.message.chat_id, text=_('Server addess changed to ') + user_data['url'], parse_mode=ParseMode.MARKDOWN)

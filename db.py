@@ -3,7 +3,6 @@ import psycopg2
 
 DATABASE_URL = getenv('DATABASE_URL')
 
-default_url = "51.178.75.71:40714"
 
 def data(user_id, url=None):
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
@@ -13,16 +12,16 @@ def data(user_id, url=None):
 
     # set
     if url:
-        if cur.rowcount == 0:
-            cur.execute("INSERT INTO users (user_id, url) VALUES ({}, '{}');".format(user_id, url))
+        if url == 'default':
+            cur.execute("UPDATE users SET url = DEFAULT WHERE user_id = %s;",(user_id,))
         else:
-            if cur.fetchone() != url:
-                cur.execute("UPDATE users SET url = '{}' WHERE user_id = {};".format(url, user_id))
+            cur.execute("UPDATE users SET url = %s WHERE user_id = %s;",(url, user_id))
     # get
     else:
-        if  cur.rowcount == 0:
-            cur.execute("INSERT INTO users (user_id, url) VALUES ({}, '{}');".format(user_id, default_url))
-            r = default_url
+        if cur.rowcount == 0:
+            cur.execute("INSERT INTO users (user_id) VALUES ({});".format(user_id))
+            cur.execute("SELECT url FROM users WHERE user_id = {};".format(user_id))
+            r = cur.fetchone()[0]
         else:
             r = cur.fetchone()[0]
 
