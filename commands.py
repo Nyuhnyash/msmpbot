@@ -15,6 +15,16 @@ logging.basicConfig(
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
+welcome_text = ("Minecraft Server Status Bot\n"
+"\n"
+"To check players online on the server use @msmpbot in the text input line in any Telegram chat.\n"
+"\n"
+"Commands:\n"
+"/status - Server info\n"
+"/players - Online players on the server\n"
+"\n"
+"To change the monitored server send me its address.")
+
 # ==========================
 # Inline Query Handler
 # ==========================
@@ -71,12 +81,11 @@ def message(update: Update, context: CallbackContext):
 # Commands
 # ==========================
 
-@run_async
 def cmd_start(update: Update, context: CallbackContext):
     """Usage: /start"""
     context.bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
 
-    context.bot.send_message(update.message.chat_id, text=welcome_text
+    context.bot.send_message(update.message.chat_id, text=_(welcome_text)
     , parse_mode=ParseMode.MARKDOWN)
 
 
@@ -151,8 +160,8 @@ def cb_status(update: Update, context: CallbackContext):
 def cb_players(update: Update, context: CallbackContext):
     user_data = context.user_data
 
-    query = MinecraftServer.lookup(user_data['url'])
-    user_data['query'] = query.query()
+    address = user_data['url']
+    online, str_players = players(address)
 
     context.bot.editMessageText(
         text=_(
@@ -163,10 +172,9 @@ def cb_players(update: Update, context: CallbackContext):
             "{2}\n"
             "╰"
             ).format(
-                user_data['url'],
-                len(user_data['query'].players.names),
-                str("`" + "`, `".join(user_data['query'].players.names) + "`")
-            )
+                address,
+                online,
+                str_players)
         , reply_markup=reply_markup()
         , chat_id=update.callback_query.message.chat_id
         , message_id=update.callback_query.message.message_id
@@ -175,9 +183,9 @@ def cb_players(update: Update, context: CallbackContext):
     
 def cb_about(update: Update, context: CallbackContext):
     context.bot.editMessageText(
-        text=welcome_text
+        text=_(welcome_text)
         , chat_id=update.callback_query.message.chat_id
-        , reply_markup=reply_markup
+        , reply_markup=reply_markup()
         , message_id=update.callback_query.message.message_id
         , parse_mode=ParseMode.MARKDOWN)
 
@@ -196,30 +204,21 @@ def check_database(update : Update, context: CallbackContext):
 
     except KeyError:
         context.user_data['url'] = data(update.effective_user.id)
-        context.user_data['lang'] = update.effective_user.language_code
         
-    global lang_code
-    if lang_code != context.user_data['lang']:
-        lang_code = context.user_data['lang']
-        
-        if gettext.find(domain, "locale", [lang_code]):
-            lang = gettext.translation(domain, "locale", [lang_code])
+        if update.effective_user.language_code:
+            context.user_data['lang'] = update.effective_user.language_code
         else:
-            lang = gettext.translation(domain, "locale", ['en'])
-        lang.install(['ngettext'])
-
-        global welcome_text
-        welcome_text = _(
-            "Minecraft Server Status Bot\n"
-            "\n"
-            "To check players online on the server use @msmpbot in the text input line in any Telegram chat.\n"
-            "\n"
-            "Commands:\n"
-            "/status - Server info\n"
-            "/players - Online players on the server\n"
-            "\n"
-            "To change the monitored server send me its address."
-        )
+            context.user_data['lang'] = 'en'
+        
+        global lang_code
+        if lang_code != context.user_data['lang']:
+            lang_code = context.user_data['lang']
+            
+            if gettext.find(domain, "locale", [lang_code]):
+                lang = gettext.translation(domain, "locale", [lang_code])
+            else:
+                lang = gettext.translation(domain, "locale", ['en'])
+            lang.install(['ngettext'])
 
     logging.info(update_object_type(update).__class__.__name__ + " recieved from " + name_and_id(update.effective_user))
     
