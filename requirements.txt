@@ -2,5 +2,5 @@ telegram
 python-telegram-bot
 mcstatus
 validators
-psycopg2
+psycopg2-binary
 requests
