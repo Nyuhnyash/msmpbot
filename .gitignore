@@ -1,8 +1,4 @@
-#Data
-persistent_data
 *.log
 __pycache__
 .idea
 .vscode
-*.pyc
-RUN.bash
