@@ -63,6 +63,9 @@ def message(update: Update, context: CallbackContext):
     user_data = context.user_data
     
     text = update.message.text.lower()
+    if text == ("ru" or "en"):
+        user_data['lang'] = text
+        return
 
     if text != 'default':
         if not validUrl(text):
@@ -210,15 +213,15 @@ def check_database(update : Update, context: CallbackContext):
         else:
             context.user_data['lang'] = 'en'
         
-        global lang_code
-        if lang_code != context.user_data['lang']:
-            lang_code = context.user_data['lang']
-            
-            if gettext.find(domain, "locale", [lang_code]):
-                lang = gettext.translation(domain, "locale", [lang_code])
-            else:
-                lang = gettext.translation(domain, "locale", ['en'])
-            lang.install(['ngettext'])
+    global lang_code
+    if lang_code != context.user_data['lang']:
+        lang_code = context.user_data['lang']
+        
+        if gettext.find(domain, "locale", [lang_code]):
+            lang = gettext.translation(domain, "locale", [lang_code])
+        else:
+            lang = gettext.translation(domain, "locale", ['en'])
+        lang.install(['ngettext'])
 
     logging.info(update_object_type(update).__class__.__name__ + " recieved from " + name_and_id(update.effective_user))
     
